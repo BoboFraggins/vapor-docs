@@ -3,8 +3,8 @@
 Fluent 的[模型 API](model.zh.md) 可帮助你通过关系创建和维护模型之间的引用。支持三种类型的关系：
 
 - [Parent](#parent) / [Child](#optional-child) (一对一)
-- [Parent](#parent) / [Children](#children) (一对多) 
-- [Siblings](#siblings) (多对多) 
+- [Parent](#parent) / [Children](#children) (一对多)
+- [Siblings](#siblings) (多对多)
 
 ## Parent
 
@@ -38,7 +38,7 @@ init(name: String, starID: Star.IDValue) {
 `key` 参数定义了用于存储父标识符的字段键。假设 `Star` 有一个 `UUID` 标识符，这个 `@Parent` 关系与下面的[字段定义](schema.zh.md#field)兼容。
 
 ```swift
-.field("star_id", .uuid, .required, .references("star", "id"))
+.field("star_id", .uuid, .required, .references("stars", "id"))
 ```
 
 请注意，[`.references`](schema.zh.md#field-constraint)约束是可选的。了解更多信息，请参见[模式](schema.zh.md)章节。
@@ -58,7 +58,7 @@ final class Planet: Model {
 字段定义与 `@Parent` 类似，但 `.required` 约束应省略。
 
 ```swift
-.field("star_id", .uuid, .references("star", "id"))
+.field("star_id", .uuid, .references("stars", "id"))
 ```
 
 ## Optional Child
@@ -140,7 +140,7 @@ enum PlanetTagStatus: String, Codable { case accepted, pending }
 // pivot 模型示例。
 final class PlanetTag: Model {
     static let schema = "planet+tag"
-    
+
     @ID(key: .id)
     var id: UUID?
 

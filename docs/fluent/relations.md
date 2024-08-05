@@ -38,7 +38,7 @@ init(name: String, starID: Star.IDValue) {
 The `key` parameter defines the field key to use for storing the parent's identifier. Assuming `Star` has a `UUID` identifier, this `@Parent` relation is compatible with the following [field definition](schema.md#field).
 
 ```swift
-.field("star_id", .uuid, .required, .references("star", "id"))
+.field("star_id", .uuid, .required, .references("stars", "id"))
 ```
 
 Note that the [`.references`](schema.md#field-constraint) constraint is optional. See [schema](schema.md) for more information.
@@ -58,7 +58,7 @@ final class Planet: Model {
 The field definition is similar to `@Parent`'s except that the `.required` constraint should be omitted.
 
 ```swift
-.field("star_id", .uuid, .references("star", "id"))
+.field("star_id", .uuid, .references("stars", "id"))
 ```
 
 ### Encoding and Decoding of Parents
@@ -96,7 +96,7 @@ The same applies when returning the model to clients. Your clients either need t
 
 ## Optional Child
 
-The `@OptionalChild` property creates a one-to-one relation between the two models. It does not store any values on the root model. 
+The `@OptionalChild` property creates a one-to-one relation between the two models. It does not store any values on the root model.
 
 ```swift
 final class Planet: Model {
@@ -137,7 +137,7 @@ try await database.schema(Governor.schema)
 
 ## Children
 
-The `@Children` property creates a one-to-many relation between two models. It does not store any values on the root model. 
+The `@Children` property creates a one-to-many relation between two models. It does not store any values on the root model.
 
 ```swift
 final class Star: Model {
@@ -147,7 +147,7 @@ final class Star: Model {
 }
 ```
 
-The `for` parameter accepts a key path to a `@Parent` or `@OptionalParent` relation referencing the root model. In this case, we are referencing the `@Parent` relation from the previous [example](#parent). 
+The `for` parameter accepts a key path to a `@Parent` or `@OptionalParent` relation referencing the root model. In this case, we are referencing the `@Parent` relation from the previous [example](#parent).
 
 New models can be added to this relation using the `create` method.
 
@@ -159,7 +159,7 @@ try await sun.$planets.create(earth, on: database)
 
 This will set the parent id on the child model automatically.
 
-Since this relation does not store any values, no database schema entry is required. 
+Since this relation does not store any values, no database schema entry is required.
 
 ## Siblings
 
@@ -173,7 +173,7 @@ enum PlanetTagStatus: String, Codable { case accepted, pending }
 // Example of a pivot model.
 final class PlanetTag: Model {
     static let schema = "planet+tag"
-    
+
     @ID(key: .id)
     var id: UUID?
 
@@ -210,7 +210,7 @@ Adding a [unique](schema.md#unique) constraint to the pivot model can help preve
 .unique(on: "planet_id", "tag_id")
 ```
 
-Once the pivot is created, use the `@Siblings` property to create the relation. 
+Once the pivot is created, use the `@Siblings` property to create the relation.
 
 ```swift
 final class Planet: Model {
@@ -238,7 +238,7 @@ final class Tag: Model {
 
 ### Siblings Attach
 
-The `@Siblings` property has methods adding and removing models from the relation. 
+The `@Siblings` property has methods adding and removing models from the relation.
 
 Use the `attach()` method to add a single model or an array of models to the relation. Pivot models are created and saved automatically as needed. A callback closure may be specified to populate additional properties of each pivot created:
 
@@ -283,7 +283,7 @@ earth.$tags.isAttached(to: inhabited)
 
 ## Get
 
-Use the `get(on:)` method to fetch a relation's value. 
+Use the `get(on:)` method to fetch a relation's value.
 
 ```swift
 // Fetches all of the sun's planets.
@@ -297,7 +297,7 @@ let planets = try await sun.$planets.get(on: database)
 print(planets)
 ```
 
-Use the `reload` parameter to choose whether or not the relation should be re-fetched from the database if it has already been already loaded. 
+Use the `reload` parameter to choose whether or not the relation should be re-fetched from the database if it has already been already loaded.
 
 ```swift
 try await sun.$planets.get(reload: true, on: database)
@@ -305,7 +305,7 @@ try await sun.$planets.get(reload: true, on: database)
 
 ## Query
 
-Use the `query(on:)` method on a relation to create a query builder for the related models. 
+Use the `query(on:)` method on a relation to create a query builder for the related models.
 
 ```swift
 // Fetch all of the sun's planets that have a naming starting with M.
@@ -318,13 +318,13 @@ See [query](query.md) for more information.
 
 Fluent's query builder allows you to preload a model's relations when it is fetched from the database. This is called eager loading and allows you to access relations synchronously without needing to call [`get`](#get) first.
 
-To eager load a relation, pass a key path to the relation to the `with` method on query builder. 
+To eager load a relation, pass a key path to the relation to the `with` method on query builder.
 
 ```swift
 // Example of eager loading.
 Planet.query(on: database).with(\.$star).all().map { planets in
     for planet in planets {
-        // `star` is accessible synchronously here 
+        // `star` is accessible synchronously here
         // since it has been eager loaded.
         print(planet.star.name)
     }
@@ -334,33 +334,33 @@ Planet.query(on: database).with(\.$star).all().map { planets in
 
 let planets = try await Planet.query(on: database).with(\.$star).all()
 for planet in planets {
-    // `star` is accessible synchronously here 
+    // `star` is accessible synchronously here
     // since it has been eager loaded.
     print(planet.star.name)
 }
 ```
 
-In the above example, a key path to the [`@Parent`](#parent) relation named `star` is passed to `with`. This causes the query builder to do an additional query after all of the planets are loaded to fetch all of their related stars. The stars are then accessible synchronously via the `@Parent` property. 
+In the above example, a key path to the [`@Parent`](#parent) relation named `star` is passed to `with`. This causes the query builder to do an additional query after all of the planets are loaded to fetch all of their related stars. The stars are then accessible synchronously via the `@Parent` property.
 
-Each relation eager loaded requires only one additional query, no matter how many models are returned. Eager loading is only possible with the `all` and `first` methods of query builder. 
+Each relation eager loaded requires only one additional query, no matter how many models are returned. Eager loading is only possible with the `all` and `first` methods of query builder.
 
 
 ### Nested Eager Load
 
-The query builder's `with` method allows you to eager load relations on the model being queried. However, you can also eager load relations on related models. 
+The query builder's `with` method allows you to eager load relations on the model being queried. However, you can also eager load relations on related models.
 
 ```swift
 let planets = try await Planet.query(on: database).with(\.$star) { star in
     star.with(\.$galaxy)
 }.all()
 for planet in planets {
-    // `star.galaxy` is accessible synchronously here 
+    // `star.galaxy` is accessible synchronously here
     // since it has been eager loaded.
     print(planet.star.galaxy.name)
 }
 ```
 
-The `with` method accepts an optional closure as a second parameter. This closure accepts an eager load builder for the chosen relation. There is no limit to how deeply eager loading can be nested. 
+The `with` method accepts an optional closure as a second parameter. This closure accepts an eager load builder for the chosen relation. There is no limit to how deeply eager loading can be nested.
 
 ## Lazy Eager Loading
 

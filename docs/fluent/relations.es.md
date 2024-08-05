@@ -38,7 +38,7 @@ init(name: String, starID: Star.IDValue) {
 El parámetro `key` define la clave del campo en el que se guarda el identificador del parent. Asumiendo que `Star` tiene un identificador `UUID`, esta relación `@Parent` es compatible con la siguiente [definición de campo](schema.md#field).
 
 ```swift
-.field("star_id", .uuid, .required, .references("star", "id"))
+.field("star_id", .uuid, .required, .references("stars", "id"))
 ```
 
 Cabe destacar que la restricción (constraint) [`.references`](schema.md#field-constraint) es opcional. Ver [schema](schema.md) para más información.
@@ -58,12 +58,12 @@ final class Planet: Model {
 La definición del campo es similar a la de `@Parent`, excepto la constraint `.required`, que debe ser omitida.
 
 ```swift
-.field("star_id", .uuid, .references("star", "id"))
+.field("star_id", .uuid, .references("stars", "id"))
 ```
 
 ## Optional Child
 
-La propiedad `@OptionalChild` crea una relación uno a uno entre dos modelos. No guarda ningún valor en el modelo raíz. 
+La propiedad `@OptionalChild` crea una relación uno a uno entre dos modelos. No guarda ningún valor en el modelo raíz.
 
 ```swift
 final class Planet: Model {
@@ -105,7 +105,7 @@ try await database.schema(Governor.schema)
 
 ## Children
 
-La propiedad `@Children` crea una relación uno a muchos entre dos modelos. No guarda ningún valor en el modelo raíz. 
+La propiedad `@Children` crea una relación uno a muchos entre dos modelos. No guarda ningún valor en el modelo raíz.
 
 ```swift
 final class Star: Model {
@@ -115,7 +115,7 @@ final class Star: Model {
 }
 ```
 
-El parámetro `for` acepta un key path a una relación `@Parent` o `@OptionalParent` referenciando el modelo raíz. En este caso, estamos referenciando la relación `@Parent` del anterior [ejemplo](#parent). 
+El parámetro `for` acepta un key path a una relación `@Parent` o `@OptionalParent` referenciando el modelo raíz. En este caso, estamos referenciando la relación `@Parent` del anterior [ejemplo](#parent).
 
 Puede añadirse un nuevo modelo a esta relación usando el método `create`.
 
@@ -141,7 +141,7 @@ enum PlanetTagStatus: String, Codable { case accepted, pending }
 // Ejemplo de modelo pivote.
 final class PlanetTag: Model {
     static let schema = "planet+tag"
-    
+
     @ID(key: .id)
     var id: UUID?
 
@@ -178,7 +178,7 @@ Añadir una restricción de [unicidad](schema.md#unique) al modelo pivote puede 
 .unique(on: "planet_id", "tag_id")
 ```
 
-Una vez el pivote está creado, usa la propiedad `@Siblings` para crear la relación. 
+Una vez el pivote está creado, usa la propiedad `@Siblings` para crear la relación.
 
 ```swift
 final class Planet: Model {
@@ -206,7 +206,7 @@ final class Tag: Model {
 
 ### Añadir a Siblings
 
-La propiedad `@Siblings` tiene métodos para añadir o quitar modelos de la relación. 
+La propiedad `@Siblings` tiene métodos para añadir o quitar modelos de la relación.
 
 Usa el método `attach()` para añadir un modelo o una colección (array) de modelos a la relación. Los modelos pivote son creados y guardados de manera automática según sea necesario. Un closure de callback puede especificarse para poblar propiedades adicionales de cada pivote creado:
 
@@ -251,7 +251,7 @@ earth.$tags.isAttached(to: inhabited)
 
 ## Get
 
-Usa el método `get(on:)` para recuperar el valor de una relación. 
+Usa el método `get(on:)` para recuperar el valor de una relación.
 
 ```swift
 // Recupera todos los planetas del sol.
@@ -265,7 +265,7 @@ let planets = try await sun.$planets.get(on: database)
 print(planets)
 ```
 
-Usa el parámetro `reload` para indicar si la relación debería ser recuperada de nuevo o no de la base de datos si ya ha sido cargada. 
+Usa el parámetro `reload` para indicar si la relación debería ser recuperada de nuevo o no de la base de datos si ya ha sido cargada.
 
 ```swift
 try await sun.$planets.get(reload: true, on: database)
@@ -273,7 +273,7 @@ try await sun.$planets.get(reload: true, on: database)
 
 ## Query
 
-Usa el método `query(on:)` en una relación para crear un constructor de consulta para los modelos conectados. 
+Usa el método `query(on:)` en una relación para crear un constructor de consulta para los modelos conectados.
 
 ```swift
 // Recupera todos los planetas del sol cuyo nombre empiece con M.
@@ -284,15 +284,15 @@ Ver [query](query.md) para más información.
 
 ## Eager Loading
 
-El constructor de consultas (query builder) de Fluent te permite precargar las relaciones de un modelo cuando es recuperado de la base de datos. Esto se conoce como "eager loading" y te permite acceder a las relaciones de manera sincrónica sin la necesidad de llamar previamente a [`load`](#lazy-eager-loading) o [`get`](#get) . 
+El constructor de consultas (query builder) de Fluent te permite precargar las relaciones de un modelo cuando es recuperado de la base de datos. Esto se conoce como "eager loading" y te permite acceder a las relaciones de manera sincrónica sin la necesidad de llamar previamente a [`load`](#lazy-eager-loading) o [`get`](#get) .
 
-Para hacer un "eager load" de una relación, pasa un key path a la relación con el método `with` en el constructor de consultas. 
+Para hacer un "eager load" de una relación, pasa un key path a la relación con el método `with` en el constructor de consultas.
 
 ```swift
 // Ejemplo de eager loading.
 Planet.query(on: database).with(\.$star).all().map { planets in
     for planet in planets {
-        // `star` es accesible de manera sincrónica aquí 
+        // `star` es accesible de manera sincrónica aquí
         // dado que ha sido precargada.
         print(planet.star.name)
     }
@@ -302,31 +302,31 @@ Planet.query(on: database).with(\.$star).all().map { planets in
 
 let planets = try await Planet.query(on: database).with(\.$star).all()
 for planet in planets {
-    // `star` es accesible de manera sincrónica aquí 
+    // `star` es accesible de manera sincrónica aquí
     // dado que ha sido precargada.
     print(planet.star.name)
 }
 ```
 
-En el ejemplo anterior, se le ha pasado un key path a la relación [`@Parent`](#parent) llamada `star` con `with`. Esto provoca que el constructor de consultas haga una consulta adicional después de cargar todos los planetas para recuperar todas las estrellas conectadas a éstos. Las estrellas son accesibles de manera sincrónica mediante la propiedad `@Parent`. 
+En el ejemplo anterior, se le ha pasado un key path a la relación [`@Parent`](#parent) llamada `star` con `with`. Esto provoca que el constructor de consultas haga una consulta adicional después de cargar todos los planetas para recuperar todas las estrellas conectadas a éstos. Las estrellas son accesibles de manera sincrónica mediante la propiedad `@Parent`.
 
-Cada relación precargada (eager loaded) necesita una única consulta adicional, sin importar cuántos modelos se hayan devuelto. La precarga (eager loading) sólo es posible con los métodos de constructor de consultas `all` y `first`. 
+Cada relación precargada (eager loaded) necesita una única consulta adicional, sin importar cuántos modelos se hayan devuelto. La precarga (eager loading) sólo es posible con los métodos de constructor de consultas `all` y `first`.
 ### Nested Eager Load
 
-El método de constructor de consultas `with` te permite precargar relaciones en el modelo que está siendo consultado. Sin embargo, también puedes precargar relaciones en los modelos conectados. 
+El método de constructor de consultas `with` te permite precargar relaciones en el modelo que está siendo consultado. Sin embargo, también puedes precargar relaciones en los modelos conectados.
 
 ```swift
 let planets = try await Planet.query(on: database).with(\.$star) { star in
     star.with(\.$galaxy)
 }.all()
 for planet in planets {
-    // `star.galaxy` es accesible de manera sincrónica aquí 
+    // `star.galaxy` es accesible de manera sincrónica aquí
     // dado que ha sido precargada.
     print(planet.star.galaxy.name)
 }
 ```
 
-El método `with` acepta un closure opcional como segundo parámetro. Este closure acepta un constructor de precarga para la relación elegida. No hay límite de profundidad en el anidado de precargas. 
+El método `with` acepta un closure opcional como segundo parámetro. Este closure acepta un constructor de precarga para la relación elegida. No hay límite de profundidad en el anidado de precargas.
 
 ## Lazy Eager Loading
 
